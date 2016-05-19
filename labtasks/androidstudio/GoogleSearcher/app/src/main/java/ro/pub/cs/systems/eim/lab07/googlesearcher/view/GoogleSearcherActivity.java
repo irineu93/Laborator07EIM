@@ -7,8 +7,16 @@ import android.view.View;
 import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
+
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.BasicResponseHandler;
+import org.apache.http.impl.client.DefaultHttpClient;
 
 import ro.pub.cs.systems.eim.lab07.googlesearcher.R;
+import ro.pub.cs.systems.eim.lab07.googlesearcher.general.Constants;
 
 public class GoogleSearcherActivity extends AppCompatActivity {
 
@@ -29,6 +37,14 @@ public class GoogleSearcherActivity extends AppCompatActivity {
             // prepend the keyword with "search?q=" string
             // start the GoogleSearcherAsyncTask passing the keyword
 
+            String keyword = keywordEditText.getText().toString();
+            if (keyword == null || keyword.isEmpty()) {
+                Toast.makeText(getApplicationContext(), Constants.EMPTY_KEYWORD_ERROR_MESSAGE, Toast.LENGTH_SHORT).show();
+            }
+            else {
+                keyword = Constants.SEARCH_PREFIX + keyword.replace(' ', '+');
+                new GoogleSearcherAsyncTask().execute(keyword);
+            }
         }
     }
 
@@ -43,6 +59,16 @@ public class GoogleSearcherActivity extends AppCompatActivity {
             // create an instance of a ResponseHandler object
             // execute the request, thus generating the result
 
+            HttpClient httpClient = new DefaultHttpClient();
+            HttpGet httpGet = new HttpGet(Constants.GOOGLE_INTERNET_ADDRESS + params[0]);
+            ResponseHandler<String> responseHandler = new BasicResponseHandler();
+
+            try {
+                return httpClient.execute(httpGet, responseHandler);
+            } catch (Exception e) {
+                ;
+            }
+
             return null;
         }
 
@@ -56,7 +82,11 @@ public class GoogleSearcherActivity extends AppCompatActivity {
             // - mimetype is text/html
             // - encoding is UTF-8
             // - history is null
-
+            googleResultsWebView.loadDataWithBaseURL(Constants.GOOGLE_INTERNET_ADDRESS,
+                    content,
+                    Constants.MIME_TYPE,
+                    Constants.CHARACTER_ENCODING,
+                    null);
         }
     }
 

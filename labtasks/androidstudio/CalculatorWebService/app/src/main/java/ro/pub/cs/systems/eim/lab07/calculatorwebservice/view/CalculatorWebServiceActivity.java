@@ -9,7 +9,26 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.BasicResponseHandler;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.params.HttpParams;
+import org.apache.http.protocol.HTTP;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import ro.pub.cs.systems.eim.lab07.calculatorwebservice.R;
+import ro.pub.cs.systems.eim.lab07.calculatorwebservice.general.Constants;
 
 public class CalculatorWebServiceActivity extends AppCompatActivity {
 
@@ -44,22 +63,63 @@ public class CalculatorWebServiceActivity extends AppCompatActivity {
 
             // TODO: exercise 4
             // signal missing values through error messages
+            if (operator1.isEmpty() || operator2.isEmpty()) {
+                return Constants.ERROR_MESSAGE_EMPTY;
+            }
 
             // create an instance of a HttpClient object
+            HttpClient httpClient = new DefaultHttpClient();
 
             // get method used for sending request from methodsSpinner
+            switch (method) {
+                // 1. GET
+                // a) build the URL into a HttpGet object (append the operators / operations to the Internet address)
+                // b) create an instance of a ResultHandler object
+                // c) execute the request, thus generating the result
+                case Constants.GET_OPERATION:
+                    HttpGet httpGet = new HttpGet(Constants.GET_WEB_SERVICE_ADDRESS +
+                            "?" + Constants.OPERATION_ATTRIBUTE + "=" + operation +
+                            "&" + Constants.OPERATOR1_ATTRIBUTE + "=" + operator1 +
+                            "&" + Constants.OPERATOR2_ATTRIBUTE + "=" + operator2);
 
-            // 1. GET
-            // a) build the URL into a HttpGet object (append the operators / operations to the Internet address)
-            // b) create an instance of a ResultHandler object
-            // c) execute the request, thus generating the result
+                    ResponseHandler<String> responseHandlerGet = new BasicResponseHandler();
+                    try {
+                        return httpClient.execute(httpGet, responseHandlerGet);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    break;
 
-            // 2. POST
-            // a) build the URL into a HttpPost object
-            // b) create a list of NameValuePair objects containing the attributes and their values (operators, operation)
-            // c) create an instance of a UrlEncodedFormEntity object using the list and UTF-8 encoding and attach it to the post request
-            // d) create an instance of a ResultHandler object
-            // e) execute the request, thus generating the result
+                // 2. POST
+                // a) build the URL into a HttpPost object
+                // b) create a list of NameValuePair objects containing the attributes and their values (operators, operation)
+                // c) create an instance of a UrlEncodedFormEntity object using the list and UTF-8 encoding and attach it to the post request
+                // d) create an instance of a ResultHandler object
+                // e) execute the request, thus generating the result
+                case Constants.POST_OPERATION:
+                    HttpPost httpPost = new HttpPost(Constants.POST_WEB_SERVICE_ADDRESS);
+                    List<NameValuePair> parameters = new ArrayList<>();
+
+                    parameters.add(new BasicNameValuePair(Constants.OPERATION_ATTRIBUTE, operation));
+                    parameters.add(new BasicNameValuePair(Constants.OPERATOR1_ATTRIBUTE, operator1));
+                    parameters.add(new BasicNameValuePair(Constants.OPERATOR2_ATTRIBUTE, operator2));
+
+                    try {
+                        UrlEncodedFormEntity urlEncodedFormEntity = new UrlEncodedFormEntity(parameters, HTTP.UTF_8);
+                        httpPost.setEntity(urlEncodedFormEntity);
+                    } catch (Exception e) {
+                        ;
+                    }
+
+                    ResponseHandler<String> responseHandlerPost = new BasicResponseHandler();
+                    try {
+                        return httpClient.execute(httpPost, responseHandlerPost);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    break;
+            }
 
             return null;
         }
@@ -67,6 +127,7 @@ public class CalculatorWebServiceActivity extends AppCompatActivity {
         @Override
         public void onPostExecute(String result) {
             // display the result in resultTextView
+            resultTextView.setText(result);
         }
     }
 
